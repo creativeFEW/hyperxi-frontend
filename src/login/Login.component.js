@@ -56,6 +56,7 @@ export default class Login extends Component {
             localStorage.setItem('tokenExp', response.data.expiration);
             this.setState({loggedInMsg: "Logged in now."});
             // Redirect here
+            this.props.history.push('/invoices')
         }
     };
 

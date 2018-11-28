@@ -1,27 +1,13 @@
+import List from '@material-ui/core/List';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
+import Typography from '@material-ui/core/Typography';
+import queryString from 'query-string';
 import React, {Component} from 'react';
 import styled from 'styled-components';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListItemText from '@material-ui/core/ListItemText';
-import Avatar from '@material-ui/core/Avatar';
-import IconButton from '@material-ui/core/IconButton';
-import FormGroup from '@material-ui/core/FormGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import FolderIcon from '@material-ui/icons/Folder';
-import DeleteIcon from '@material-ui/icons/Delete';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
 import Api from "../api";
-import reduce from 'lodash/reduce';
-import queryString from 'query-string';
-import Select from '@material-ui/core/Select';
+import Form from './invoiceForm';
+import Row from './row';
 
 const El = styled.div`
 
@@ -42,151 +28,48 @@ const Col = styled.div`
   width: 100%;
 `;
 
-const ListId = styled.div`
-  font-size: 14px;
-  display: inline-block;
-`;
-
-const ListAmt = styled.div`
-  font-size: 14px;
-  display: inline-block;
-  margin-right: 10px;
-`;
-
-const computeTotals = (laborItems, materialItems, offset) => {
-    if (!offset) {
-        offset = 0;
-    }
-    const totals = {
-        labor: 0,
-        materials: 0,
-        grandTotal: 0,
-        total: 0
-    };
-
-    totals.labor = reduce(laborItems, (sum, laborItem) => {
-        return laborItem.cost.toFixed(2)*1 + sum;
-    }, 0);
-
-    totals.materials = reduce(materialItems, (sum, materialItem) => {
-        return (materialItem.unitCost.toFixed(2)*1 * materialItem.quantity) + sum;
-    }, 0);
-
-    totals.grandTotal = totals.labor + totals.materials;
-    totals.total = totals.grandTotal + offset;
-
-    return totals;
-};
-
-const formatCurrency = (amount, decimalCount = 2, decimal = ".", thousands = ",") => {
-    try {
-        decimalCount = Math.abs(decimalCount);
-        decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
-
-        const negativeSign = amount < 0 ? "-" : "";
-
-        let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
-        let j = (i.length > 3) ? i.length % 3 : 0;
-
-        return negativeSign + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
-    } catch (e) {
-        console.log(e)
-    }
-};
-
-class Row extends Component {
-
-    state = {
-        menuOpen: false,
-        anchorEl: null
-    };
-
-    handleClick = event => {
-        this.setState({menuOpen: true, anchorEl: event.currentTarget});
-    };
-
-    handleClose = () => {
-        this.setState({menuOpen: false});
-    };
-
-    render() {
-        return (
-            <ListItem>
-                <ListId>{this.props.invoice.id}</ListId>
-                <ListItemText
-                    primary={this.props.invoice.description}
-                    secondary={this.props.invoice.user.companyName}
-                />
-                <ListAmt>${formatCurrency(computeTotals(this.props.invoice.invoiceLaborItems, this.props.invoice.invoiceMaterialItems, this.props.invoice.offset).total)}</ListAmt>
-                <ListItemSecondaryAction>
-                    <IconButton onClick={this.handleClick}>
-                        <MoreVertIcon/>
-                    </IconButton>
-                    <Menu
-                        id="long-menu"
-                        anchorEl={this.state.anchorEl}
-                        open={this.state.menuOpen}
-                        onClose={this.handleClose}
-                        PaperProps={{
-                            style: {
-                                width: 200
-                            }
-                        }}>
-                        <MenuItem onClick={this.handleClose}>View</MenuItem>
-                        <MenuItem onClick={this.handleClose}>Edit</MenuItem>
-                        <MenuItem onClick={this.handleClose}>Delete</MenuItem>
-                    </Menu>
-                </ListItemSecondaryAction>
-            </ListItem>
-
-        );
-    }
-}
-
 class Invoices extends Component {
 
     state = {
         invoices: [],
+        users: [],
         query: {
             status: 'unpaid',
             limit: 10
         },
-        statusFilter: false
+        statusFilter: false,
+        loadedInvoice: null
     };
 
     async fetchInvoices() {
+        Api.axios.get(`/user`).then(response => {
+            this.setState({users: response.data})
+        });
         const response = await Api.axios.get(`/invoice?${queryString.stringify(this.state.query)}`);
         this.setState({
                 invoices: response.data
             }
-        )
+        );
     }
 
     async componentDidMount() {
-        const query = queryString.parse(this.props.location.search);
-        this.setState(() => {
-            return {query};
-        }, () => {
-            this.fetchInvoices();
-        })
+        this.fetchInvoices();
     }
 
     updateQuery = (key, value) => {
-        this.setState((state, props) => {
+        this.setState(state => {
             const query = state.query;
             query[key] = value;
             return {
                 query
             }
         }, () => {
-            // Update history
-            this.props.history.replace(`/invoices?${queryString.stringify(this.state.query)}`);
             this.fetchInvoices();
         });
     };
 
     onCloseFilter = (type) => {
-        this.setState((state, props) => {
+        this.setState(state => {
             const o = {...state};
             o[type] = false;
             return o;
@@ -194,11 +77,15 @@ class Invoices extends Component {
     };
 
     onOpenFilter = (type) => {
-        this.setState((state, props) => {
+        this.setState(state => {
             const o = {...state};
             o[type] = true;
             return o;
         });
+    };
+
+    loadInvoiceIntoForm = (invoice) => {
+        this.setState({loadedInvoice: invoice, statusFilter: false});
     };
 
     render() {
@@ -222,13 +109,15 @@ class Invoices extends Component {
                         <List dense>
                             {
                                 this.state.invoices.map(invoice => {
-                                    return <Row key={invoice.id} invoice={invoice}/>
+                                    return <Row onEdit={this.loadInvoiceIntoForm} key={invoice.id} invoice={invoice}/>
                                 })
                             }
                         </List>
                     </InvoiceList>
                     <Col>
-                        Right col
+                        {this.state.loadedInvoice &&
+                            <Form invoice={this.state.loadedInvoice} users={this.state.users}/>
+                        }
                     </Col>
                 </Layout>
             </El>

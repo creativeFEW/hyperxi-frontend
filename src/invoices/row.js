@@ -76,6 +76,11 @@ class Row extends Component {
         this.setState({menuOpen: false});
     };
 
+    handleEdit = () => {
+      this.setState({menuOpen: false, anchorEl: null});
+      this.props.onEdit(this.props.invoice);
+    };
+
     render() {
         return (
             <ListItem>
@@ -100,7 +105,7 @@ class Row extends Component {
                             }
                         }}>
                         <MenuItem onClick={this.handleClose}>View</MenuItem>
-                        <MenuItem onClick={() => {this.props.onEdit(this.props.invoice)}}>Edit</MenuItem>
+                        <MenuItem onClick={this.handleEdit}>Edit</MenuItem>
                         <MenuItem onClick={this.handleClose}>Delete</MenuItem>
                     </Menu>
                 </ListItemSecondaryAction>

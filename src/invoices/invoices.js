@@ -38,7 +38,7 @@ class Invoices extends Component {
             limit: 10
         },
         statusFilter: false,
-        loadedInvoice: null
+        editInvoice: null
     };
 
     async fetchInvoices() {
@@ -84,8 +84,8 @@ class Invoices extends Component {
         });
     };
 
-    loadInvoiceIntoForm = (invoice) => {
-        this.setState({loadedInvoice: invoice, statusFilter: false});
+    editInvoice = (invoice) => {
+        this.setState({editInvoice: invoice});
     };
 
     render() {
@@ -93,7 +93,7 @@ class Invoices extends Component {
             <El>
                 <Layout>
                     <InvoiceList>
-                        <Typography component="h2" variant="h4" gutterBottom>Invoices</Typography>
+                        {/*<Typography component="h2" variant="h4" gutterBottom>Invoices</Typography>*/}
                         <Select
                             open={this.state.statusFilter}
                             onClose={() => {this.onCloseFilter('statusFilter')}}
@@ -109,15 +109,16 @@ class Invoices extends Component {
                         <List dense>
                             {
                                 this.state.invoices.map(invoice => {
-                                    return <Row onEdit={this.loadInvoiceIntoForm} key={invoice.id} invoice={invoice}/>
+                                    return <Row onEdit={this.editInvoice} key={invoice.id} invoice={invoice}/>
                                 })
                             }
                         </List>
                     </InvoiceList>
                     <Col>
-                        {this.state.loadedInvoice &&
-                            <Form invoice={this.state.loadedInvoice} users={this.state.users}/>
-                        }
+                      <Form
+                        onRefresh={(status, id) => {console.log('Form: onRefresh', status, id)}}
+                        editInvoice={this.state.editInvoice}
+                      />
                     </Col>
                 </Layout>
             </El>

@@ -5,9 +5,9 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
-import reduce from 'lodash/reduce';
 import React, {Component} from 'react';
 import styled from 'styled-components';
+import {computeTotals, currencyFormatter} from "./utils";
 
 const ListId = styled.div`
   font-size: 14px;
@@ -19,47 +19,6 @@ const ListAmt = styled.div`
   display: inline-block;
   margin-right: 10px;
 `;
-
-const computeTotals = (laborItems, materialItems, offset) => {
-    if (!offset) {
-        offset = 0;
-    }
-    const totals = {
-        labor: 0,
-        materials: 0,
-        grandTotal: 0,
-        total: 0
-    };
-
-    totals.labor = reduce(laborItems, (sum, laborItem) => {
-        return laborItem.cost.toFixed(2)*1 + sum;
-    }, 0);
-
-    totals.materials = reduce(materialItems, (sum, materialItem) => {
-        return (materialItem.unitCost.toFixed(2)*1 * materialItem.quantity) + sum;
-    }, 0);
-
-    totals.grandTotal = totals.labor + totals.materials;
-    totals.total = totals.grandTotal + offset;
-
-    return totals;
-};
-
-const formatCurrency = (amount, decimalCount = 2, decimal = ".", thousands = ",") => {
-    try {
-        decimalCount = Math.abs(decimalCount);
-        decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
-
-        const negativeSign = amount < 0 ? "-" : "";
-
-        let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
-        let j = (i.length > 3) ? i.length % 3 : 0;
-
-        return negativeSign + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
-    } catch (e) {
-        console.log(e)
-    }
-};
 
 class Row extends Component {
 
@@ -73,12 +32,22 @@ class Row extends Component {
     };
 
     handleClose = () => {
-        this.setState({menuOpen: false});
+        this.setState({menuOpen: false, anchorEl: null});
     };
 
     handleEdit = () => {
-      this.setState({menuOpen: false, anchorEl: null});
-      this.props.onEdit(this.props.invoice);
+        this.handleClose();
+        this.props.onEdit(this.props.invoice);
+    };
+
+    handleDelete = () => {
+        this.handleClose();
+        this.props.onDelete(this.props.invoice);
+    };
+
+    handleView = () => {
+        this.handleClose();
+        this.props.onView(this.props.invoice);
     };
 
     render() {
@@ -89,7 +58,7 @@ class Row extends Component {
                     primary={this.props.invoice.description}
                     secondary={this.props.invoice.user.companyName}
                 />
-                <ListAmt>${formatCurrency(computeTotals(this.props.invoice.invoiceLaborItems, this.props.invoice.invoiceMaterialItems, this.props.invoice.offset).total)}</ListAmt>
+                <ListAmt>{currencyFormatter(computeTotals(this.props.invoice.invoiceLaborItems, this.props.invoice.invoiceMaterialItems, this.props.invoice.offset).total)}</ListAmt>
                 <ListItemSecondaryAction>
                     <IconButton onClick={this.handleClick}>
                         <MoreVertIcon/>
@@ -104,9 +73,9 @@ class Row extends Component {
                                 width: 200
                             }
                         }}>
-                        <MenuItem onClick={this.handleClose}>View</MenuItem>
+                        <MenuItem onClick={this.handleView}>View</MenuItem>
                         <MenuItem onClick={this.handleEdit}>Edit</MenuItem>
-                        <MenuItem onClick={this.handleClose}>Delete</MenuItem>
+                        <MenuItem onClick={this.handleDelete}>Delete</MenuItem>
                     </Menu>
                 </ListItemSecondaryAction>
             </ListItem>

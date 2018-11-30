@@ -1,7 +1,6 @@
 import List from '@material-ui/core/List';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import Typography from '@material-ui/core/Typography';
 import queryString from 'query-string';
 import React, {Component} from 'react';
 import styled from 'styled-components';
@@ -34,17 +33,14 @@ class Invoices extends Component {
         invoices: [],
         users: [],
         query: {
-            status: 'unpaid',
-            limit: 10
+            status: '' +
+                'open',
+            limit: 100
         },
-        statusFilter: false,
-        editInvoice: null
+        statusFilter: false
     };
 
     async fetchInvoices() {
-        Api.axios.get(`/user`).then(response => {
-            this.setState({users: response.data})
-        });
         const response = await Api.axios.get(`/invoice?${queryString.stringify(this.state.query)}`);
         this.setState({
                 invoices: response.data
@@ -53,6 +49,9 @@ class Invoices extends Component {
     }
 
     async componentDidMount() {
+        Api.axios.get(`/user`).then(response => {
+            this.setState({users: response.data})
+        });
         this.fetchInvoices();
     }
 
@@ -85,7 +84,18 @@ class Invoices extends Component {
     };
 
     editInvoice = (invoice) => {
-        this.setState({editInvoice: invoice});
+        this.form.loadInvoice(invoice.id);
+    };
+
+    deleteInvoice = async invoice => {
+        if (window.confirm('Are you sure sir?')) {
+            await Api.axios.delete(`/invoice/${invoice.id}`);
+            this.fetchInvoices();
+        }
+    };
+
+    viewInvoice = invoice => {
+        // Stuff
     };
 
     render() {
@@ -102,22 +112,30 @@ class Invoices extends Component {
                             onChange={(e) => {this.updateQuery('status', e.target.value)}}
                             inputProps={{name: 'status'}}
                         >
-                            <MenuItem value="paid">Paid</MenuItem>
-                            <MenuItem value="unpaid">Unpaid</MenuItem>
+                            <MenuItem value="open">Open</MenuItem>
+                            <MenuItem value="closed">Closed</MenuItem>
+                            <MenuItem value="pending">Pending</MenuItem>
+                            <MenuItem value="burned">Burned</MenuItem>
                         </Select>
 
                         <List dense>
                             {
                                 this.state.invoices.map(invoice => {
-                                    return <Row onEdit={this.editInvoice} key={invoice.id} invoice={invoice}/>
+                                    return <Row
+                                        onEdit={this.editInvoice}
+                                        onView={this.viewInvoice}
+                                        onDelete={this.deleteInvoice}
+                                        key={invoice.id}
+                                        invoice={invoice}
+                                    />
                                 })
                             }
                         </List>
                     </InvoiceList>
                     <Col>
                       <Form
+                        ref={el => this.form = el}
                         onRefresh={(status, id) => {console.log('Form: onRefresh', status, id)}}
-                        editInvoice={this.state.editInvoice}
                       />
                     </Col>
                 </Layout>

@@ -6,7 +6,10 @@ import Snackbar from '@material-ui/core/Snackbar';
 import ErrorIcon from '@material-ui/icons/Error';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
-import Invoices from "./invoices/invoices";
+import InvoiceList from "./invoices/invoiceList";
+import { Provider } from "react-redux";
+import store from "./redux/store";
+import DevTools from './devtools';
 
 class App extends Component {
 
@@ -41,9 +44,6 @@ class App extends Component {
     });
   }
 
-  componentDidMount() {
-  }
-
   render() {
     return (
       <React.Fragment>
@@ -67,12 +67,15 @@ class App extends Component {
             </IconButton>
           ]}
         />
-        <Router>
-          <div>
-            <Route path={`/`} exact component={Login}/>
-            <Route path={`/invoices`} component={Invoices}/>
-          </div>
-        </Router>
+        <Provider store={store}>
+          <Router>
+            <div>
+              <DevTools/>
+              <Route path={`/`} exact component={Login}/>
+              <Route path={`/invoices`} component={InvoiceList}/>
+            </div>
+          </Router>
+        </Provider>
       </React.Fragment>
     );
   }

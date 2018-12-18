@@ -7,6 +7,10 @@ import styled from 'styled-components';
 import Api from "../api";
 import Form from './invoiceForm';
 import Row from './row';
+import { withRouter } from "react-router-dom";
+import connect from "react-redux/es/connect/connect";
+import { fetchUsers } from "../redux/actions/user.actions";
+import { fetchInvoices } from "../redux/actions/invoice.actions";
 
 const El = styled.div`
 
@@ -16,7 +20,7 @@ const Layout = styled.div`
   display: flex;
 `;
 
-const InvoiceList = styled.div`
+const InvoiceListComponent = styled.div`
   flex: 1 1 40%;
   width: 40%;
   margin-right: 20px;
@@ -27,7 +31,7 @@ const Col = styled.div`
   width: 100%;
 `;
 
-class Invoices extends Component {
+class InvoiceList extends Component {
 
     state = {
         invoices: [],
@@ -40,19 +44,9 @@ class Invoices extends Component {
         statusFilter: false
     };
 
-    async fetchInvoices() {
-        const response = await Api.axios.get(`/invoice?${queryString.stringify(this.state.query)}`);
-        this.setState({
-                invoices: response.data
-            }
-        );
-    }
-
     async componentDidMount() {
-        Api.axios.get(`/user`).then(response => {
-            this.setState({users: response.data})
-        });
-        this.fetchInvoices();
+      await this.props.fetchUsers(); // We wait in case users is ever removed from the payload of invoices
+      this.props.fetchInvoices(this.state.query);
     }
 
     updateQuery = (key, value) => {
@@ -63,7 +57,7 @@ class Invoices extends Component {
                 query
             }
         }, () => {
-            this.fetchInvoices();
+          this.props.fetchInvoices(this.state.query);
         });
     };
 
@@ -89,7 +83,7 @@ class Invoices extends Component {
 
     deleteInvoice = async invoice => {
         if (window.confirm('Are you sure sir?')) {
-            await Api.axios.delete(`/invoice/${invoice.id}`);
+            await Api.axios.delete(`/invoices/${invoice.id}`);
             this.fetchInvoices();
         }
     };
@@ -102,7 +96,7 @@ class Invoices extends Component {
         return (
             <El>
                 <Layout>
-                    <InvoiceList>
+                    <InvoiceListComponent>
                         {/*<Typography component="h2" variant="h4" gutterBottom>Invoices</Typography>*/}
                         <Select
                             open={this.state.statusFilter}
@@ -120,7 +114,7 @@ class Invoices extends Component {
 
                         <List dense>
                             {
-                                this.state.invoices.map(invoice => {
+                                this.props.invoiceList.map(invoice => {
                                     return <Row
                                         onEdit={this.editInvoice}
                                         onView={this.viewInvoice}
@@ -131,7 +125,7 @@ class Invoices extends Component {
                                 })
                             }
                         </List>
-                    </InvoiceList>
+                    </InvoiceListComponent>
                     <Col>
                       <Form
                         ref={el => this.form = el}
@@ -144,4 +138,13 @@ class Invoices extends Component {
     }
 }
 
-export default Invoices;
+const mapStateToProps = state => {
+  return {
+    usersList: state.users.userList,
+    loadingUsers: state.users.loading,
+    invoiceLoading: state.invoices.loading,
+    invoiceList: state.invoices.invoiceList
+  };
+};
+
+export default withRouter(connect(mapStateToProps, {fetchUsers, fetchInvoices})(InvoiceList));

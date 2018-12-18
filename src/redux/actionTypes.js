@@ -1,0 +1,9 @@
+// Auth
+export const LOGIN_START = "LOGIN_START";
+export const LOGIN_STOP = "LOGIN_STOP";
+// Users
+export const FETCH_USERS_START = "FETCH_USERS_START";
+export const FETCH_USERS_STOP = "FETCH_USERS_STOP";
+// Invoices
+export const FETCH_INVOICES_START = "FETCH_INVOICES_START";
+export const FETCH_INVOICES_STOP = "FETCH_INVOICES_STOP";

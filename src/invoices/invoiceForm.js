@@ -5,6 +5,9 @@ import map from 'lodash/map';
 import { currencyFormatter } from "./utils";
 import uuid from "uuid/v1";
 import FormActions from "./formActions";
+import { withRouter } from "react-router-dom";
+import connect from "react-redux/es/connect/connect";
+import { newInvoice, updateInvoice } from "../redux/actions/invoice.actions";
 
 const vlaidItem = (item) => {
   return item && item !== '';
@@ -32,41 +35,14 @@ class Form extends Component {
     issuedAt: format(new Date(), 'YYYY-MM-DD'),
   };
 
-  onModifyUi = (type, open) => {
-    this.setState(state => {
-      return state[type] = open;
-    });
+  onModifyUi = (type, value) => {
+    this.props.updateInvoice(type,value)
   };
 
   resetInvoice = () => {
-    this.setState(state => {
-      return {
-        invoiceId: null,
-        selectedUserId: state.users[0].id,
-        description: '',
-        po: '',
-        notes: '',
-        status: 'open',
-        offset: 0,
-        transactionId: '',
-        datePaid: '',
-        issuedAt: format(new Date(), 'YYYY-MM-DD'),
-        paidVia: '',
-        dateRange: '',
-        netTerms: 30,
-        mode: 'new',
-        laborItems: [],
-        materialItems: [],
-        searchId: '',
-        loading: false,
-        addLaborDescription: '',
-        addMaterialDescription: '',
-        addLaborCost: '',
-        addMaterialUnitCost: '',
-        addMaterialQuantity: ''
-      }
-    });
+    this.props.newInvoice();
   };
+
   addLaborItem = () => {
 
     if (this.state.addLaborDescription === '') {
@@ -169,71 +145,6 @@ class Form extends Component {
     }
   };
 
-  async componentDidMount() {
-    const response = await Api.axios.get('/users');
-    this.setState(() => {
-      return {
-        users: response.data,
-        selectedUserId: response.data[0].id
-      }
-    }, () => {
-      this.resetInvoice();
-    });
-  }
-
-  async loadInvoice(id) {
-    this.setState({loading: true, mode: 'edit'});
-    try {
-      const response = await Api.axios.get(`/invoices?id=${id}`);
-      const i = response.data[0];
-      if (i) {
-        this.setState({
-          invoiceId: i.id,
-          selectedUserId: i.user.id,
-          description: i.description || '',
-          notes: i.notes || '',
-          po: i.po || '',
-          paidVia: i.paidVia || '',
-          datePaid: i.datePaid ? format(i.datePaid, 'YYYY-MM-DD') : '',
-          issuedAt: i.issuedAt ? format(i.issuedAt, 'YYYY-MM-DD') : '',
-          status: i.status,
-          offset: i.offset,
-          dateRange: i.dateRange || '',
-          transactionId: i.transactionId || '',
-          netTerms: i.netTerms,
-          loading: false,
-          searchId: i.id,
-          mode: 'edit',
-
-          laborItems: map(i.invoiceLaborItems, l => {
-            return {
-              id: l.id,
-              description: l.description,
-              cost: l.cost
-            }
-          }),
-
-          materialItems: map(i.invoiceMaterialItems, l => {
-            return {
-              id: l.id,
-              description: l.description,
-              unitCost: l.unitCost,
-              quantity: l.quantity
-            }
-          })
-        });
-      } else {
-        alert('No invoice found');
-        this.resetInvoice();
-      }
-    } catch (err) {
-      console.log('Error loading invoice');
-      this.setState({
-        loading: false
-      });
-    }
-  }
-
   collectInvoiceDataForSave() {
     const invoice = {
       userId: this.state.selectedUserId,
@@ -296,33 +207,23 @@ class Form extends Component {
       <div>
         <FormActions mode="CREATE_NEW"/>
         <form style={{margin: '0 20px 0 0'}} autoComplete="off" noValidate>
-          Invoice ID: {this.state.invoiceId}<br/>
-          Mode: {this.state.mode}<br/>
-          <input type="number"
-                 value={this.state.searchId}
-                 onChange={this.setSearchId}/>
-          <button type="button"
-                  onClick={() => {
-                    this.loadInvoice(this.state.searchId);
-                  }}>Search
-          </button>
+          Invoice ID: {this.props.currentInvoiceId}<br/>
+          Mode: {this.props.currentInvoiceId ? 'Edit' : "New"}<br/>
           <div>
             <button type="button" onClick={this.resetInvoice}>New Invoice</button>
           </div>
           <div>
             Client:
-            {this.state.selectedUserId &&
             <select
-              value={this.state.selectedUserId}
+              value={this.props.currentInvoice.userId}
               onChange={(e) => {
-                this.onModifyUi('selectedUserId', e.target.value)
+                this.onModifyUi('userId', e.target.value)
               }}
             >
-              {this.state.users.map(user => (
+              {this.props.usersList.map(user => (
                 <option key={user.id} value={user.id}>{user.companyName}</option>
               ))}
             </select>
-            }
           </div>
           <div>
             Description:<br/>
@@ -451,4 +352,26 @@ class Form extends Component {
   }
 }
 
-export default Form
+const mapStateToProps = state => {
+  return {
+    usersList: state.users.userList,
+    currentInvoice: state.invoices.currentInvoice,
+    materialItemsList: state.invoices.materialItemsList, // The material items to show when creating/updating an invoice
+    laborItemsList: state.invoices.laborItemsList, // The labor items to show when creating/updating an invoice
+    currentMaterialItem: state.invoices.currentMaterialItem, // The Material Item-only field data when creating/updating a material item
+    currentLaborItem: state.invoices.currentLaborItem, // The Labor Item-only field data when creating/updating a labor item
+    currentInvoiceId: state.invoices.currentInvoiceId, // The ID of an invoice being edited
+    currentLaborItemId: state.invoices.currentLaborItemId, // The ID of a labor item being edited
+    currentMaterialItemId: state.invoices.currentMaterialItemId,// The ID of an material item being edited
+    error: state.invoices.error // The current error related to creating/editing an invoice
+  };
+};
+
+export default withRouter(
+  connect(
+    mapStateToProps,
+    {
+      newInvoice,
+      updateInvoice
+    }
+  )(Form));

@@ -1,7 +1,6 @@
 import List from '@material-ui/core/List';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import queryString from 'query-string';
 import React, {Component} from 'react';
 import styled from 'styled-components';
 import Api from "../api";
@@ -10,7 +9,7 @@ import Row from './row';
 import { withRouter } from "react-router-dom";
 import connect from "react-redux/es/connect/connect";
 import { fetchUsers } from "../redux/actions/user.actions";
-import { fetchInvoices } from "../redux/actions/invoice.actions";
+import { editInvoice, fetchInvoices } from "../redux/actions/invoice.actions";
 
 const El = styled.div`
 
@@ -78,7 +77,7 @@ class InvoiceList extends Component {
     };
 
     editInvoice = (invoice) => {
-        this.form.loadInvoice(invoice.id);
+        this.props.editInvoice(invoice.id);
     };
 
     deleteInvoice = async invoice => {
@@ -128,7 +127,6 @@ class InvoiceList extends Component {
                     </InvoiceListComponent>
                     <Col>
                       <Form
-                        ref={el => this.form = el}
                         onRefresh={(status, id) => {console.log('Form: onRefresh', status, id)}}
                       />
                     </Col>
@@ -147,4 +145,12 @@ const mapStateToProps = state => {
   };
 };
 
-export default withRouter(connect(mapStateToProps, {fetchUsers, fetchInvoices})(InvoiceList));
+export default withRouter(
+  connect(
+    mapStateToProps,
+    {
+      fetchUsers,
+      fetchInvoices,
+      editInvoice,
+    }
+    )(InvoiceList));

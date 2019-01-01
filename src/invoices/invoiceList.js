@@ -88,7 +88,8 @@ class InvoiceList extends Component {
     };
 
     viewInvoice = invoice => {
-        // Stuff
+        const win = window.open(`https://www.creativefew.com/invoice/${invoice.id}?authCode=${this.props.usersList[invoice.userId].authCode}`, '_blank');
+        win.focus();
     };
 
     render() {

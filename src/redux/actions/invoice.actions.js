@@ -2,7 +2,7 @@ import {
     MOVE_TO_CREATE_NEW_INVOICE_MODE, MOVE_TO_EDIT_INVOICE_MODE,
     FETCH_INVOICES_START,
     ADD_ITEM_TO_INVOICE,
-    FETCH_INVOICES_STOP, UPDATE_INVOICE, UPDATE_CURRENT_INVOICE_ITEM, DELETE_ITEM
+    FETCH_INVOICES_STOP, UPDATE_INVOICE, UPDATE_CURRENT_INVOICE_ITEM, DELETE_ITEM, EDIT_ITEM
 } from '../actionTypes';
 import Api from "../../api";
 import queryString from 'query-string';
@@ -25,7 +25,7 @@ export function fetchInvoices(query = {status: 'open'}) {
 export const saveInvoice = ({invoice, materialItems, laborItems, invoiceId}) => {
     return async dispatch => {
         const finalInvoice = {...invoice, paidVia: invoice.paidVia || null};
-        if (!!finalInvoice) { // Update
+        if (!!invoiceId) { // Update
             console.log('DEBUG Update invoice');
             const finalLaborItems = map(laborItems, laborItem => {
                 return {...laborItem, invoiceId}
@@ -53,15 +53,22 @@ export const saveInvoice = ({invoice, materialItems, laborItems, invoiceId}) => 
             dispatch(fetchInvoices({status: 'open'}));
         }
     };
-};
 
-export const deleteItem = ({kind, id, index}) => {
-    return async dispatch => {
-        dispatch({type: DELETE_ITEM, kind, id, index});
-    };
 };
 
 // UI Actions - Job is to put the UI into a specific state
+
+export const deleteItem = ({kind, index}) => {
+    return async dispatch => {
+        dispatch({type: DELETE_ITEM, kind, index});
+    };
+};
+
+export const editItem = ({kind, index}) => {
+    return async dispatch => {
+        dispatch({type: EDIT_ITEM, kind, index});
+    };
+};
 
 export function newInvoice() {
     return async dispatch => {

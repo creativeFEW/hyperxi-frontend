@@ -4,7 +4,7 @@ import {
     MOVE_TO_EDIT_INVOICE_MODE,
     FETCH_INVOICE_STOP,
     FETCH_INVOICES_START,
-    FETCH_INVOICES_STOP, UPDATE_INVOICE, ADD_ITEM_TO_INVOICE, UPDATE_CURRENT_INVOICE_ITEM, DELETE_ITEM
+    FETCH_INVOICES_STOP, UPDATE_INVOICE, ADD_ITEM_TO_INVOICE, UPDATE_CURRENT_INVOICE_ITEM, DELETE_ITEM, EDIT_ITEM
 } from "../actionTypes";
 import format from 'date-fns/format';
 
@@ -128,9 +128,28 @@ export default function (state = initialState, action) {
             return {...state, loading: true};
         case DELETE_ITEM:
             if (action.kind === 'labor') {
-                return {...state, laborItemsList: deleteItem({id: action.id, items: state.laborItemsList, index: action.index})};
+                return {...state, laborItemsList: deleteItem({items: state.laborItemsList, index: action.index})};
             } else {
-                return {...state, materialItemsList: deleteItem({id: action.id, items: state.materialItemsList, index: action.index})};
+                return {...state, materialItemsList: deleteItem({items: state.materialItemsList, index: action.index})};
+            }
+        case EDIT_ITEM:
+            if (action.kind === 'labor') {
+                return {
+                    ...state,
+                    currentLaborItem: {
+                        description: state.laborItemsList[action.index].description,
+                        cost: state.laborItemsList[action.index].cost
+                    }
+                };
+            } else {
+                return {
+                    ...state,
+                    currentMaterialItem: {
+                        description: state.materialItemsList[action.index].description,
+                        unitCost: state.materialItemsList[action.index].unitCost,
+                        quantity: state.materialItemsList[action.index].quantity,
+                    }
+                };
             }
         case FETCH_INVOICES_STOP:
             return {...state, invoiceList: action.invoices, loading: false, status: action.status};
@@ -139,14 +158,8 @@ export default function (state = initialState, action) {
     }
 }
 
-const deleteItem = ({id, items, index}) => {
-    if (!!id) {
-        return filter(items, item => {
-            return item.id !== id;
-        });
-    } else {
-        return filter(items, (item, i) => {
-            return i !== index;
-        });
-    }
+const deleteItem = ({items, index}) => {
+    return filter(items, (item, i) => {
+        return i !== index;
+    });
 };

@@ -1,13 +1,10 @@
 import React, {Component} from 'react';
-import Api from "../api";
-import format from 'date-fns/format';
-import map from 'lodash/map';
 import {currencyFormatter} from "./utils";
 import FormActions from "./formActions";
 import {withRouter} from "react-router-dom";
 import connect from "react-redux/es/connect/connect";
 import {
-    addItemToInvoice, deleteItem, fetchInvoices, newInvoice, saveInvoice, updateCurrentInvoiceItem,
+    addItemToInvoice, deleteItem, editItem, fetchInvoices, newInvoice, saveInvoice, updateCurrentInvoiceItem,
     updateInvoice
 } from "../redux/actions/invoice.actions";
 
@@ -16,26 +13,6 @@ const vlaidItem = (item) => {
 };
 
 class Form extends Component {
-
-    state = {
-        users: [],
-        laborItems: [],
-        materialItems: [],
-        mode: 'new',
-        addLaborDescription: '',
-        addMaterialDescription: '',
-        addLaborCost: '',
-        addMaterialUnitCost: '',
-        addMaterialQuantity: '',
-        searchId: '',
-        po: '',
-        dateRange: '',
-        netTerms: 30,
-        transactionId: '',
-        offset: 0,
-        datePaid: '',
-        issuedAt: format(new Date(), 'YYYY-MM-DD')
-    };
 
     onModifyUi = (type, value) => {
         this.props.updateInvoice(type, value);
@@ -82,52 +59,8 @@ class Form extends Component {
         if (error) {
             return alert(error);
         }
-        const data = this.collectInvoiceDataForSave();
-        this.props.saveInvoice({invoice: data.invoice, materialItems: data.materialItems, laborItems: data.laborItems, invoiceId: this.props.currentInvoice.id});
+        this.props.saveInvoice({invoice: this.props.currentInvoice, materialItems: this.props.materialItemsList, laborItems: this.props.laborItemsList, invoiceId: this.props.currentInvoice.id});
         // Navigate if viewWhenDone
-    };
-
-    collectInvoiceDataForSave() {
-        const invoice = {
-            userId: this.props.currentInvoice.userId,
-            description: this.props.currentInvoice.description,
-            po: this.props.currentInvoice.po,
-            notes: this.props.currentInvoice.notes,
-            status: this.props.currentInvoice.status,
-            offset: this.props.currentInvoice.offset,
-            transactionId: this.props.currentInvoice.transactionId,
-            datePaid: this.props.currentInvoice.datePaid,
-            issuedAt: this.props.currentInvoice.issuedAt,
-            paidVia: this.props.currentInvoice.paidVia,
-            dateRange: this.props.currentInvoice.dateRange,
-            netTerms: this.props.currentInvoice.netTerms
-        };
-
-        const laborItems = map(this.props.laborItemsList, laborItem => {
-            return {
-                description: laborItem.description,
-                cost: laborItem.cost
-            };
-        });
-
-        const materialItems = map(this.state.materialItemsList, materialItem => {
-            return {
-                description: materialItem.description,
-                unitCost: materialItem.unitCost,
-                quantity: materialItem.quantity
-            };
-        });
-
-        // The api enforces validation on paidVia and an empty string is not a valid option
-        if (this.state.paidVia === '') {
-            delete invoice.paidVia;
-        }
-
-        return {
-            invoice,
-            laborItems,
-            materialItems
-        };
     };
 
     validateInvoice() {
@@ -275,20 +208,20 @@ class Form extends Component {
                     </div>
                     <h2>Labor Items</h2>
                     {
-                        this.props.laborItemsList.map((l, i) => {
-                            return <div key={l.id || i}>{l.description} {currencyFormatter(l.cost)}
-                                <button type="button">Edit</button>
-                                <button type="button" onClick={() => {this.deleteInvoiceItem({kind: 'labor', id: l.id, index: i})}}>Delete</button>
+                        this.props.laborItemsList.map((l, index) => {
+                            return <div key={index}>{l.description} {currencyFormatter(l.cost)}
+                                <button type="button" onClick={() => {this.props.editItem({kind: 'labor', index});}}>Edit</button>
+                                <button type="button" onClick={() => {this.deleteInvoiceItem({kind: 'labor', index})}}>Delete</button>
                             </div>;
                         })
                     }
                     <h2>Material Items</h2>
                     {
-                        this.props.materialItemsList.map(m => {
+                        this.props.materialItemsList.map((m, index) => {
                             return <div
-                                key={m.id}>{m.description} {currencyFormatter(m.unitCost)} {m.quantity} total:{currencyFormatter(m.quantity * m.unitCost)}
-                                <button type="button">Edit</button>
-                                <button type="button">Delete</button>
+                                key={index}>{m.description} {currencyFormatter(m.unitCost)} {m.quantity} total:{currencyFormatter(m.quantity * m.unitCost)}
+                                <button type="button" onClick={() => {this.props.editItem({kind: 'material', index})}}>Edit</button>
+                                <button type="button" onClick={() => {this.deleteInvoiceItem({kind: 'material', index})}}>Delete</button>
                             </div>;
                         })
                     }
@@ -323,6 +256,7 @@ export default withRouter(
             updateCurrentInvoiceItem,
             saveInvoice,
             deleteItem,
-            fetchInvoices
+            fetchInvoices,
+            editItem
         }
     )(Form));

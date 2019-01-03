@@ -41,10 +41,13 @@ export const saveInvoice = ({invoice, materialItems, laborItems, invoiceId}) => 
         } else { // New
             console.log('DEBUG Create invoice');
             const response = await Api.axios.post(`/invoices`, finalInvoice);
-            const newInvoiceId = response.data.id;
+            console.log('Server response', response.data);
+            const newInvoiceId = response.data.invoice.id;
+            console.log('Created invoice Id', newInvoiceId);
             const laborItemsWithIds = laborItems.map(laborItem => {
                 return {...laborItem, invoiceId: newInvoiceId}
             });
+            console.log('labor items to send', laborItemsWithIds);
             const materialItemsWithIds = materialItems.map(materialItem => {
                 return {...materialItem, invoiceId: newInvoiceId}
             });

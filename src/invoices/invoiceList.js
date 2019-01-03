@@ -83,7 +83,7 @@ class InvoiceList extends Component {
     deleteInvoice = async invoice => {
         if (window.confirm('Are you sure sir?')) {
             await Api.axios.delete(`/invoices/${invoice.id}`);
-            this.fetchInvoices();
+            this.props.fetchInvoices();
         }
     };
 

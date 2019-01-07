@@ -26,7 +26,6 @@ export const saveInvoice = ({invoice, materialItems, laborItems, invoiceId}) => 
     return async dispatch => {
         const finalInvoice = {...invoice, paidVia: invoice.paidVia || null};
         if (!!invoiceId) { // Update
-            console.log('DEBUG Update invoice');
             const finalLaborItems = map(laborItems, laborItem => {
                 return {...laborItem, invoiceId}
             });
@@ -39,15 +38,11 @@ export const saveInvoice = ({invoice, materialItems, laborItems, invoiceId}) => 
             await Api.axios.post(`/invoices/materialItems`, finalMaterialItems);
             dispatch(fetchInvoices());
         } else { // New
-            console.log('DEBUG Create invoice');
             const response = await Api.axios.post(`/invoices`, finalInvoice);
-            console.log('Server response', response.data);
             const newInvoiceId = response.data.invoice.id;
-            console.log('Created invoice Id', newInvoiceId);
             const laborItemsWithIds = laborItems.map(laborItem => {
                 return {...laborItem, invoiceId: newInvoiceId}
             });
-            console.log('labor items to send', laborItemsWithIds);
             const materialItemsWithIds = materialItems.map(materialItem => {
                 return {...materialItem, invoiceId: newInvoiceId}
             });
@@ -112,9 +107,15 @@ export function addItemToInvoice(item, kind) {
     };
 }
 
-export function updateCurrentInvoiceItem(item, kind) {
+export function updateCurrentInvoiceItem(item, kind) { // The form only
     return async dispatch => {
         dispatch({type: UPDATE_CURRENT_INVOICE_ITEM, kind, item});
+    };
+}
+
+export function updateCurrentInvoiceListItem(item, kind, index) {
+    return async dispatch => {
+        dispatch({type: UPDATE_CURRENT_INVOICE_ITEM, kind, item, index});
     };
 }
 

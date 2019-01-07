@@ -4,9 +4,17 @@ import FormActions from "./formActions";
 import {withRouter} from "react-router-dom";
 import connect from "react-redux/es/connect/connect";
 import {
-    addItemToInvoice, deleteItem, editItem, fetchInvoices, newInvoice, saveInvoice, updateCurrentInvoiceItem,
-    updateInvoice
+  addItemToInvoice,
+  deleteItem,
+  editItem,
+  fetchInvoices,
+  newInvoice,
+  saveInvoice,
+  updateCurrentInvoiceItem,
+  updateCurrentInvoiceListItem,
+  updateInvoice
 } from "../redux/actions/invoice.actions";
+import * as Selectors from "../redux/selectors";
 
 const vlaidItem = (item) => {
     return item && item !== '';
@@ -34,6 +42,20 @@ class Form extends Component {
         }
         this.props.addItemToInvoice(this.props.currentLaborItem, 'labor');
     };
+
+    updateLaborItem = () => {
+
+        if (this.props.currentLaborItem.description === '') {
+            alert('Labor description cannot be blank');
+            return;
+        }
+        if (this.props.currentLaborItem.cost === '') {
+            alert('Labor cost cannot be blank');
+            return;
+        }
+    //    ...
+    };
+
     addMaterialItem = () => {
 
         if (this.props.currentMaterialItem.description === '') {
@@ -191,9 +213,11 @@ class Form extends Component {
                     <input type="number" value={this.props.currentLaborItem.cost}
                            onChange={e => this.props.updateCurrentInvoiceItem({...this.props.currentLaborItem, cost: e.target.value}, 'labor')}/>
                     <div>
-                        <button onClick={this.addLaborItem} type="button">Add this labor item</button>
+                        { this.props.currentLaborItemIndex ?
+                          <button onClick={this.addLaborItem} type="button">Add this labor item</button> :
+                          <button onClick={() => {this.props.updateCurrentInvoiceListItem(this.props.currentLaborItem, 'labor', this.props.currentLaborItemIndex)}} type="button">Update this labor item</button>
+                        }
                     </div>
-
                     Add Material Description<br/>
                     <input type="text" value={this.props.currentMaterialItem.description}
                            onChange={e => this.props.updateCurrentInvoiceItem({...this.props.currentMaterialItem, description: e.target.value}, 'material')}/><br/>
@@ -204,7 +228,10 @@ class Form extends Component {
                     <input type="number" value={this.props.currentMaterialItem.quantity}
                            onChange={e => this.props.updateCurrentInvoiceItem({...this.props.currentMaterialItem, quantity: e.target.value}, 'material')}/>
                     <div>
-                        <button onClick={this.addMaterialItem} type="button">Add this material item</button>
+                      { this.props.currentMaterialItemIndex ?
+                        <button onClick={this.addMaterialItem} type="button">Add this material item</button> :
+                        <button onClick={() => {this.props.updateCurrentInvoiceListItem(this.props.currentMaterialItem, 'material', this.props.currentMaterialItemIndex)}} type="button">Update this material item</button>
+                      }
                     </div>
                     <h2>Labor Items</h2>
                     {
@@ -233,15 +260,15 @@ class Form extends Component {
 
 const mapStateToProps = state => {
     return {
-        usersList: state.users.userList,
+        usersList: Selectors.getUsers(state),
         currentInvoice: state.invoices.currentInvoice,
         materialItemsList: state.invoices.materialItemsList, // The material items to show when creating/updating an invoice
         laborItemsList: state.invoices.laborItemsList, // The labor items to show when creating/updating an invoice
         currentMaterialItem: state.invoices.currentMaterialItem, // The Material Item-only field data when creating/updating a material item
         currentLaborItem: state.invoices.currentLaborItem, // The Labor Item-only field data when creating/updating a labor item
         currentInvoiceId: state.invoices.currentInvoiceId, // The ID of an invoice being edited
-        currentLaborItemId: state.invoices.currentLaborItemId, // The ID of a labor item being edited
-        currentMaterialItemId: state.invoices.currentMaterialItemId,// The ID of an material item being edited
+        currentLaborItemIndex: state.invoices.currentLaborItemIndex, // The index of the labor item being edited
+        currentMaterialItemIndex: state.invoices.currentMaterialItemIndex,// The index of the material item being edited
         error: state.invoices.error // The current error related to creating/editing an invoice
     };
 };
@@ -257,6 +284,7 @@ export default withRouter(
             saveInvoice,
             deleteItem,
             fetchInvoices,
-            editItem
+            editItem,
+            updateCurrentInvoiceListItem
         }
     )(Form));

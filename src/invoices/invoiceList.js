@@ -10,6 +10,7 @@ import { withRouter } from "react-router-dom";
 import connect from "react-redux/es/connect/connect";
 import { fetchUsers } from "../redux/actions/user.actions";
 import { editInvoice, fetchInvoices } from "../redux/actions/invoice.actions";
+import * as Selectors from "../redux/selectors";
 
 const El = styled.div`
 
@@ -139,7 +140,7 @@ class InvoiceList extends Component {
 
 const mapStateToProps = state => {
   return {
-    usersList: state.users.userList,
+    usersList: Selectors.getUsers(state),
     loadingUsers: state.users.loading,
     invoiceLoading: state.invoices.loading,
     invoiceList: state.invoices.invoiceList

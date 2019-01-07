@@ -9,7 +9,7 @@ import CloseIcon from '@material-ui/icons/Close';
 import InvoiceList from "./invoices/invoiceList";
 import { Provider } from "react-redux";
 import store from "./redux/store";
-import DevTools from './devtools';
+import DevTools from './devtools/devtools';
 
 class App extends Component {
 
@@ -17,6 +17,7 @@ class App extends Component {
     message: '',
     open: false
   };
+
   handleClose = () => {
     this.setState({open: false})
   };
